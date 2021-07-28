@@ -1,3 +1,6 @@
 [docker]
 skf-k8s-cp ansible_user=vagrant
 skf-k8s-worker1 ansible_user=vagrant
+
+[test]
+skf-k8s-worker1 ansible_user=vagrant

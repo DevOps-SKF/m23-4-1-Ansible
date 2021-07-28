@@ -1,8 +1,71 @@
 - hosts: docker
   become: yes
   become_method: sudo
-  gather_facts: false
+  gather_facts: yes
+
   tasks:
-    - name: Set timezone 
-      timezone:
-        name: Europe/Moscow
+  - name: Set timezone 
+    timezone:
+      name: Europe/Moscow
+
+  - name: Remove some packages
+    apt: name={{ item }} state=absent autoremove=yes
+    loop: [ 'docker', 'docker-engine', 'docker.io', 'containerd', 'runc' ]
+
+  - name: Install required system packages
+    apt: name={{ item }} state=latest update_cache=yes
+    loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'gnupg', 'lsb-release']
+#      'python3-pip', 'virtualenv', 'python3-setuptools'
+
+  - name: Add Docker GPG apt Key
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+
+  - name: Add Docker Repository
+    apt_repository:
+      repo: deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release | lower  }} stable
+      state: present
+
+  - name: Update apt and install docker-ce
+    apt: update_cache=yes name={{ item }} state=latest
+    loop: ['docker-ce', 'docker-ce-cli', 'containerd.io']
+
+  - name: Default containerd config
+    shell: if ! grep -q cgroups /etc/containerd/config.toml ; then containerd config default > /etc/containerd/config.toml ; fi
+
+  - name: Add cgroups to containerd config
+    lineinfile:
+      path: /etc/containerd/config.toml
+      insertafter: '\[plugins.\"io.containerd.grpc.v1.cri\".containerd.runtimes.runc.options\]'
+      line: '            SystemdCgroup = true'
+
+  - name: Creating docker daemon.json
+    copy:
+      dest: "/etc/docker/daemon.json"
+      content: |
+        {
+          "exec-opts": ["native.cgroupdriver=systemd"],
+          "log-driver": "json-file",
+          "log-opts": {
+              "max-size": "100m"
+          },
+          "storage-driver": "overlay2"
+        }
+
+  - name: Restart containerd
+    service:
+      name: containerd
+      state: restarted
+
+  - name: Enable docker service
+    service:
+      name: docker.service
+      enabled: yes
+      state: started
+
+  - name: Add the user to the docker group
+    user:
+      name: "{{ ansible_user }}"
+      groups: docker
+      append: yes
