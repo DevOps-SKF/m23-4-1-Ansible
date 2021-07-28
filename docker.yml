@@ -1,0 +1,8 @@
+- hosts: docker
+  become: yes
+  become_method: sudo
+  gather_facts: false
+  tasks:
+    - name: Set timezone 
+      timezone:
+        name: Europe/Moscow
