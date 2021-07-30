@@ -11,7 +11,7 @@
 
 ### 1 - Установка Docker
 
-Изначально все было в Vagrantfile, сразу же устаналвивающий и Kubernetes.  
+Изначально все было в Vagrantfile, сразу же устанавливающий и Kubernetes.  
 Переношу в Ansible, оставляя containerd и прочие настройки, чтобы при необходимости поверх можно было поставить Kubernetes.  
 
     export DEBIAN_FRONTEND=noninteractive
@@ -47,5 +47,8 @@
     sudo usermod -aG docker $(whoami)
 
 Запуск:  
-`ansible-playbook -i hosts docker.yml`
+`ansible-playbook -i hosts docker.yml`  
+
+Затем, если нужен и Kubernetes,  
+`ansible-playbook -i hosts k8s.yml`
 

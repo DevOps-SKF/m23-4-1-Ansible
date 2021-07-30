@@ -2,12 +2,22 @@
   become: yes
   become_method: sudo
   gather_facts: yes
+  vars:
+    DOCKERVER: "5:19.03.15~3-0~ubuntu-focal"
 
   tasks:
   - name: Set timezone 
     timezone:
       name: Europe/Moscow
 
+  - name: Ensure the locale exists
+    locale_gen:
+      name: en_GB.UTF-8
+      state: present
+
+  - name: set time format to 24h
+    command: localectl set-locale LC_TIME="en_GB.UTF-8"
+    
   - name: Remove some packages
     apt: name={{ item }} state=absent autoremove=yes
     loop: [ 'docker', 'docker-engine', 'docker.io', 'containerd', 'runc' ]
@@ -28,8 +38,8 @@
       state: present
 
   - name: Update apt and install docker-ce
-    apt: update_cache=yes name={{ item }} state=latest
-    loop: ['docker-ce', 'docker-ce-cli', 'containerd.io']
+    apt: update_cache=yes name={{ item }} state=present force=yes
+    loop: ["docker-ce={{DOCKERVER}}", "docker-ce-cli={{DOCKERVER}}", "containerd.io"]
 
   - name: Default containerd config
     shell: if ! grep -q cgroups /etc/containerd/config.toml ; then containerd config default > /etc/containerd/config.toml ; fi

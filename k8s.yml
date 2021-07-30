@@ -1,0 +1,139 @@
+- hosts: docker
+  become: yes
+  become_method: sudo
+  gather_facts: yes
+  vars:
+    K8SVER: "1.20.7-00"
+    join_command: "="
+
+  tasks:
+
+  - name: Common part of Kubernetes installation
+    block:
+      - name: Install required system packages
+        apt: name={{ item }} state=latest update_cache=yes
+        loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'gnupg', 'lsb-release', 'bash-completion']
+    #      'python3-pip', 'virtualenv', 'python3-setuptools'
+
+      - name: Add Kubernetes GPG apt Key
+        apt_key:
+          url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+          state: present
+
+      - name: Add Docker Repository
+        apt_repository:
+          repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+          state: present
+
+      - name: Update apt and install Kubernetes packages
+        apt: update_cache=yes name={{ item }} state=present force=yes
+        loop: [ "kubelet={{K8SVER}}", "kubectl={{K8SVER}}", "kubeadm={{K8SVER}}"]
+
+      - name: Hold kubeadm
+        dpkg_selections:
+          selection: hold
+          name: "{{ item }}"
+        loop: ['kubelet', 'kubectl', 'kubeadm']
+
+      - name: remove swap
+        shell: "swapoff -a"
+      # Common part of the initial deployment completed
+
+
+# setup master (control plane) node
+  - name: Setup Master (Control Plane) node
+    block:
+      - name: initialize the cluster
+        shell: kubeadm init --pod-network-cidr=10.253.192.0/18 >> kubeadm_init.log
+        args:
+          chdir: $HOME
+          creates: kubeadm_init.log
+     
+      - name: create root .kube directory
+        file:
+          path: "/root/.kube"
+          state: directory
+          mode: 0755
+
+      - name: copy admin.conf to root kube config
+        copy:
+          src: /etc/kubernetes/admin.conf
+          dest: "/root/.kube/config"
+          remote_src: yes
+          
+      - name: create user's .kube directory
+        become_user: "{{ansible_user}}"
+        file:
+          path: "/home/{{ansible_user}}/.kube"
+          state: directory
+          mode: 0755
+
+      - name: copy admin.conf to user's kube config
+        copy:
+          src: /etc/kubernetes/admin.conf
+          dest: "/home/{{ansible_user}}/.kube/config"
+          remote_src: yes
+          owner: "{{ansible_user}}"
+      
+      - name: install Pod network
+#      shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup.log
+        shell: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml >> pod_network_setup.log
+        args:
+          chdir: $HOME
+          creates: pod_network_setup.log
+
+      - name: get join command
+        shell: kubeadm token create --print-join-command
+        register: join_command_raw
+      
+      - name: join_command_raw
+        debug: msg="Join_raw - {{ join_command_raw }}"
+    
+      - name: set join command
+        set_fact:
+          join_command: "{{ join_command_raw.stdout_lines[0] }}"
+
+      - name: join_command
+        debug: msg="Join - {{ join_command }}"
+      
+      - name: Prepare join.sh
+        become_user: anton
+        local_action: copy content="{{ join_command }}" dest="{{ playbook_dir }}/join.sh"
+
+      - name: kubectl completion
+        shell: echo "source <(kubectl completion bash)" >> /home/{{ansible_user}}/.bashrc
+
+      - name: Install helm3
+        snap:
+          name: helm
+          classic: yes
+
+    when: master is defined
+
+# setup workers
+  - name: Setup Workers
+    block:
+      - name: Take join.sh
+        copy: 
+          src: "join.sh" 
+          dest: $HOME
+
+      - name: join cluster	
+        shell: sh ./join.sh >> node_joined.log
+        args:
+          chdir: $HOME
+          creates: node_joined.log
+    when: master is undefined
+
+#  sudo systemctl daemon-reload
+#  sudo systemctl restart kubelet
+
+#  kubectl describe node #{VM_NAME}
+#  kubectl get no -o wide
+  
+#  source <(kubectl completion bash)
+  
+      # Fix kubelet IP
+      # ?  echo 'Environment="KUBELET_EXTRA_ARGS=--node-ip=#{IP}"' | sudo tee -a /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+
+

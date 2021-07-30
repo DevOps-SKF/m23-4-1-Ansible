@@ -2,66 +2,74 @@
 PLAY [docker] **********************************************************************************************************
 
 TASK [Gathering Facts] *************************************************************************************************
-ok: [skf-k8s-worker1]
 ok: [skf-k8s-cp]
+ok: [skf-k8s-worker1]
 
 TASK [Set timezone] ****************************************************************************************************
-ok: [skf-k8s-cp]
+changed: [skf-k8s-cp]
+changed: [skf-k8s-worker1]
+
+TASK [Ensure the locale exists] ****************************************************************************************
 ok: [skf-k8s-worker1]
+ok: [skf-k8s-cp]
+
+TASK [set time format to 24h] ******************************************************************************************
+changed: [skf-k8s-worker1]
+changed: [skf-k8s-cp]
 
 TASK [Remove some packages] ********************************************************************************************
-ok: [skf-k8s-cp] => (item=docker)
 ok: [skf-k8s-worker1] => (item=docker)
-ok: [skf-k8s-cp] => (item=docker-engine)
+ok: [skf-k8s-cp] => (item=docker)
 ok: [skf-k8s-worker1] => (item=docker-engine)
+ok: [skf-k8s-cp] => (item=docker-engine)
 ok: [skf-k8s-cp] => (item=docker.io)
 ok: [skf-k8s-worker1] => (item=docker.io)
-ok: [skf-k8s-cp] => (item=containerd)
 ok: [skf-k8s-worker1] => (item=containerd)
+ok: [skf-k8s-cp] => (item=containerd)
 ok: [skf-k8s-cp] => (item=runc)
 ok: [skf-k8s-worker1] => (item=runc)
 
 TASK [Install required system packages] ********************************************************************************
-ok: [skf-k8s-worker1] => (item=apt-transport-https)
-ok: [skf-k8s-worker1] => (item=ca-certificates)
-ok: [skf-k8s-worker1] => (item=curl)
-ok: [skf-k8s-worker1] => (item=software-properties-common)
+changed: [skf-k8s-worker1] => (item=apt-transport-https)
 changed: [skf-k8s-cp] => (item=apt-transport-https)
-ok: [skf-k8s-worker1] => (item=gnupg)
+ok: [skf-k8s-worker1] => (item=ca-certificates)
 ok: [skf-k8s-cp] => (item=ca-certificates)
-ok: [skf-k8s-worker1] => (item=lsb-release)
+changed: [skf-k8s-worker1] => (item=curl)
 changed: [skf-k8s-cp] => (item=curl)
+ok: [skf-k8s-worker1] => (item=software-properties-common)
 ok: [skf-k8s-cp] => (item=software-properties-common)
+ok: [skf-k8s-worker1] => (item=gnupg)
 ok: [skf-k8s-cp] => (item=gnupg)
+ok: [skf-k8s-worker1] => (item=lsb-release)
 ok: [skf-k8s-cp] => (item=lsb-release)
 
 TASK [Add Docker GPG apt Key] ******************************************************************************************
-ok: [skf-k8s-worker1]
-changed: [skf-k8s-cp]
-
-TASK [Add Docker Repository] *******************************************************************************************
-ok: [skf-k8s-worker1]
-changed: [skf-k8s-cp]
-
-TASK [Update apt and install docker-ce] ********************************************************************************
-ok: [skf-k8s-worker1] => (item=docker-ce)
-ok: [skf-k8s-worker1] => (item=docker-ce-cli)
-ok: [skf-k8s-worker1] => (item=containerd.io)
-changed: [skf-k8s-cp] => (item=docker-ce)
-ok: [skf-k8s-cp] => (item=docker-ce-cli)
-ok: [skf-k8s-cp] => (item=containerd.io)
-
-TASK [Default containerd config] ***************************************************************************************
 changed: [skf-k8s-worker1]
 changed: [skf-k8s-cp]
 
+TASK [Add Docker Repository] *******************************************************************************************
+changed: [skf-k8s-worker1]
+changed: [skf-k8s-cp]
+
+TASK [Update apt and install docker-ce] ********************************************************************************
+changed: [skf-k8s-worker1] => (item=docker-ce=5:19.03.15~3-0~ubuntu-focal)
+changed: [skf-k8s-cp] => (item=docker-ce=5:19.03.15~3-0~ubuntu-focal)
+changed: [skf-k8s-worker1] => (item=docker-ce-cli=5:19.03.15~3-0~ubuntu-focal)
+ok: [skf-k8s-worker1] => (item=containerd.io)
+changed: [skf-k8s-cp] => (item=docker-ce-cli=5:19.03.15~3-0~ubuntu-focal)
+ok: [skf-k8s-cp] => (item=containerd.io)
+
+TASK [Default containerd config] ***************************************************************************************
+changed: [skf-k8s-cp]
+changed: [skf-k8s-worker1]
+
 TASK [Add cgroups to containerd config] ********************************************************************************
 changed: [skf-k8s-cp]
-ok: [skf-k8s-worker1]
+changed: [skf-k8s-worker1]
 
 TASK [Creating docker daemon.json] *************************************************************************************
-ok: [skf-k8s-worker1]
 changed: [skf-k8s-cp]
+changed: [skf-k8s-worker1]
 
 TASK [Restart containerd] **********************************************************************************************
 changed: [skf-k8s-worker1]
@@ -72,10 +80,10 @@ ok: [skf-k8s-cp]
 ok: [skf-k8s-worker1]
 
 TASK [Add the user to the docker group] ********************************************************************************
-ok: [skf-k8s-worker1]
+changed: [skf-k8s-worker1]
 changed: [skf-k8s-cp]
 
 PLAY RECAP *************************************************************************************************************
-skf-k8s-cp                 : ok=13   changed=9    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-skf-k8s-worker1            : ok=13   changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+skf-k8s-cp                 : ok=15   changed=11   unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+skf-k8s-worker1            : ok=15   changed=11   unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 

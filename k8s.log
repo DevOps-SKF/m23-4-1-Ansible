@@ -1,0 +1,119 @@
+
+PLAY [docker] **********************************************************************************************************
+
+TASK [Gathering Facts] *************************************************************************************************
+ok: [skf-k8s-cp]
+ok: [skf-k8s-worker1]
+
+TASK [Install required system packages] ********************************************************************************
+ok: [skf-k8s-worker1] => (item=apt-transport-https)
+ok: [skf-k8s-cp] => (item=apt-transport-https)
+ok: [skf-k8s-cp] => (item=ca-certificates)
+ok: [skf-k8s-worker1] => (item=ca-certificates)
+ok: [skf-k8s-worker1] => (item=curl)
+ok: [skf-k8s-cp] => (item=curl)
+ok: [skf-k8s-worker1] => (item=software-properties-common)
+ok: [skf-k8s-cp] => (item=software-properties-common)
+ok: [skf-k8s-cp] => (item=gnupg)
+ok: [skf-k8s-worker1] => (item=gnupg)
+ok: [skf-k8s-cp] => (item=lsb-release)
+ok: [skf-k8s-worker1] => (item=lsb-release)
+ok: [skf-k8s-cp] => (item=bash-completion)
+ok: [skf-k8s-worker1] => (item=bash-completion)
+
+TASK [Add Kubernetes GPG apt Key] **************************************************************************************
+changed: [skf-k8s-cp]
+changed: [skf-k8s-worker1]
+
+TASK [Add Docker Repository] *******************************************************************************************
+changed: [skf-k8s-worker1]
+changed: [skf-k8s-cp]
+
+TASK [Update apt and install Kubernetes packages] **********************************************************************
+changed: [skf-k8s-cp] => (item=kubelet=1.20.7-00)
+changed: [skf-k8s-worker1] => (item=kubelet=1.20.7-00)
+changed: [skf-k8s-cp] => (item=kubectl=1.20.7-00)
+changed: [skf-k8s-worker1] => (item=kubectl=1.20.7-00)
+changed: [skf-k8s-cp] => (item=kubeadm=1.20.7-00)
+changed: [skf-k8s-worker1] => (item=kubeadm=1.20.7-00)
+
+TASK [Hold kubeadm] ****************************************************************************************************
+changed: [skf-k8s-worker1] => (item=kubelet)
+changed: [skf-k8s-cp] => (item=kubelet)
+changed: [skf-k8s-worker1] => (item=kubectl)
+changed: [skf-k8s-cp] => (item=kubectl)
+changed: [skf-k8s-cp] => (item=kubeadm)
+changed: [skf-k8s-worker1] => (item=kubeadm)
+
+TASK [remove swap] *****************************************************************************************************
+changed: [skf-k8s-cp]
+changed: [skf-k8s-worker1]
+
+TASK [initialize the cluster] ******************************************************************************************
+skipping: [skf-k8s-worker1]
+changed: [skf-k8s-cp]
+
+TASK [create root .kube directory] *************************************************************************************
+skipping: [skf-k8s-worker1]
+changed: [skf-k8s-cp]
+
+TASK [copy admin.conf to root kube config] *****************************************************************************
+skipping: [skf-k8s-worker1]
+changed: [skf-k8s-cp]
+
+TASK [create user's .kube directory] ***********************************************************************************
+skipping: [skf-k8s-worker1]
+changed: [skf-k8s-cp]
+
+TASK [copy admin.conf to user's kube config] ***************************************************************************
+skipping: [skf-k8s-worker1]
+changed: [skf-k8s-cp]
+
+TASK [install Pod network] *********************************************************************************************
+skipping: [skf-k8s-worker1]
+changed: [skf-k8s-cp]
+
+TASK [get join command] ************************************************************************************************
+skipping: [skf-k8s-worker1]
+changed: [skf-k8s-cp]
+
+TASK [join_command_raw] ************************************************************************************************
+ok: [skf-k8s-cp] => {
+    "msg": "Join_raw - {'cmd': 'kubeadm token create --print-join-command', 'stdout': 'kubeadm join 192.168.5.18:6443 --token XXX     --discovery-token-ca-cert-hash sha256:XXX ', 'stderr': '', 'rc': 0, 'start': '2021-07-30 14:28:12.156662', 'end': '2021-07-30 14:28:12.220763', 'delta': '0:00:00.064101', 'changed': True, 'stdout_lines': ['kubeadm join 192.168.5.18:6443 --token XXX     --discovery-token-ca-cert-hash sha256:XXX '], 'stderr_lines': [], 'failed': False}"
+}
+skipping: [skf-k8s-worker1]
+
+TASK [set join command] ************************************************************************************************
+ok: [skf-k8s-cp]
+skipping: [skf-k8s-worker1]
+
+TASK [join_command] ****************************************************************************************************
+ok: [skf-k8s-cp] => {
+    "msg": "Join - kubeadm join 192.168.5.18:6443 --token XXX     --discovery-token-ca-cert-hash sha256:XXX "
+}
+skipping: [skf-k8s-worker1]
+
+TASK [Prepare join.sh] *************************************************************************************************
+skipping: [skf-k8s-worker1]
+changed: [skf-k8s-cp -> localhost]
+
+TASK [kubectl completion] **********************************************************************************************
+skipping: [skf-k8s-worker1]
+changed: [skf-k8s-cp]
+
+TASK [Install helm3] ***************************************************************************************************
+skipping: [skf-k8s-worker1]
+changed: [skf-k8s-cp]
+
+TASK [Take join.sh] ****************************************************************************************************
+skipping: [skf-k8s-cp]
+changed: [skf-k8s-worker1]
+
+TASK [join cluster] ****************************************************************************************************
+skipping: [skf-k8s-cp]
+changed: [skf-k8s-worker1]
+
+PLAY RECAP *************************************************************************************************************
+skf-k8s-cp                 : ok=20   changed=15   unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+skf-k8s-worker1            : ok=9    changed=7    unreachable=0    failed=0    skipped=13   rescued=0    ignored=0   
+
