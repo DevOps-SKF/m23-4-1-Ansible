@@ -1,0 +1,43 @@
+- hosts: mysql
+  become: yes
+  become_method: sudo
+  gather_facts: yes
+
+  tasks:
+  - name: Set timezone 
+    timezone:
+      name: Europe/Moscow
+
+  - name: Ensure the locale exists
+    locale_gen:
+      name: en_GB.UTF-8
+      state: present
+
+  - name: set time format to 24h
+    command: localectl set-locale LC_TIME="en_GB.UTF-8"
+    
+  - name: Install Nginx
+    apt: 
+      update_cache: yes
+      name: nginx
+      state: present
+
+  - name: nginx systemd
+    systemd:
+      name: nginx
+      enabled: yes
+      state: started    
+
+
+  - name: Get root directory
+    shell: egrep "^[[:blank:]]root" /etc/nginx/sites-enabled/default | awk -F '[\t ;]' '{ print $3 }'
+    args:
+      warn: no
+    register: dir
+    
+  - name: Store root directory
+    set_fact: dir="{{ dir.stdout }}"
+  - debug: msg="{{ dir }}"
+
+  - name: copy .my.cnf file with root password credentials
+    template: src=templates/index.html dest="{{ dir }}" owner=root mode=0644
