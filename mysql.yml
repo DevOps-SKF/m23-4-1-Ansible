@@ -1,0 +1,77 @@
+- hosts: mysql
+  become: yes
+  become_method: sudo
+  gather_facts: yes
+
+  tasks:
+#  - debug: var=ansible_all_ipv4_addresses
+#  - debug: var=ansible_default_ipv4.address
+#  - debug: var=hostvars[inventory_hostname]['ansible_default_ipv4']['address']
+
+  - name: Set timezone 
+    timezone:
+      name: Europe/Moscow
+
+  - name: Ensure the locale exists
+    locale_gen:
+      name: en_GB.UTF-8
+      state: present
+
+  - name: set time format to 24h
+    command: localectl set-locale LC_TIME="en_GB.UTF-8"
+    
+  - name: Get remote user
+    command: whoami
+    become: no
+    register: u
+    
+  - name: Store remote user name
+    set_fact: user="{{ u.stdout }}"
+#  - debug: msg="User {{ user }}"
+
+
+    
+  - name: Install MySQL
+    apt: update_cache=yes name={{ item }} state=present force=yes
+    loop: [ "mysql-server", "mysql-client", "pip" ]
+
+  - name: Make sure pymysql is present
+    become: true # needed if the other tasks are not played as root
+    pip:
+      name: pymysql
+      state: present
+
+
+
+  - name: Generate mysql root password
+    set_fact:
+      mysql_root_password: "{{ lookup('password', '/dev/null chars=ascii_lowercase,ascii_uppercase,digits length=14') }}"
+
+  - name: Generate mysql user password
+    set_fact:
+      mysql_user_password: "{{ lookup('password', '/dev/null chars=ascii_lowercase,ascii_uppercase,digits length=12') }}"
+
+  - debug: msg="Generated root password {{ mysql_root_password }}"
+  - debug: msg="Generated {{ user }} password {{ mysql_user_password }}"
+  
+  - name: copy .my.cnf file with root password credentials
+    template: src=templates/.my.cnf dest=/root/.my.cnf owner=root mode=0600
+
+# comment bind_address /etc/mysql/mysql.conf.d/mysqld.cnf if external connections required
+
+  - name: Start the MySQL service
+    action: service name=mysql state=started
+
+  - name: Create deploy user for mysql
+    mysql_user: 
+      user: "{{ user }}"
+      password: "{{ mysql_user_password }}"
+      host: "%" 
+      priv: "*.*:ALL,GRANT"
+      login_unix_socket: /var/run/mysqld/mysqld.sock  # default path
+    no_log: true
+
+# sudo mysql -u root -p{{ mysql_root_password }} -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '{{ mysql_root_password }}'; FLUSH PRIVILEGES;"
+
+# systemctl stop mysql; apt -y remove mysql*; apt -y purge mysql*; apt -y autoremove; apt -y clean mysql*; rm -rf /etc/mysql; apt -rf /var/lib/mysql*
+

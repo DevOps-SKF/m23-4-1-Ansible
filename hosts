@@ -4,3 +4,6 @@ skf-k8s-worker1 ansible_user=vagrant
 
 [test]
 skf-k8s-worker1 ansible_user=vagrant
+
+[mysql]
+192.168.5.100

@@ -5,7 +5,7 @@
 1. Написать свой Playbook, который будет устанавливать и запускать Docker на локальной машине.  
 2. Написать свой Playbook, который будет запускать MySQL-сервер на локальной машине
 3. написать свой Playbook, который будет выполнять установку и запуск веб-сервера nginx.  
-Измените файл /usr/share/nginx/html/index.html, чтобы при обращении к веб-серверу он выдавал любой факт о машине, на которой запущен   (например, ее hostname или общее количество оперативной памяти). Зайдите в веб-браузере на эту машину и проверьте результат работы.
+Измените файл /usr/share/nginx/html/index.html, чтобы при обращении к веб-серверу он выдавал любой факт о машине, на которой запущен   (например, ее hostname или общее количество оперативной памяти). 
 
 ## Решение
 
@@ -51,4 +51,26 @@
 
 Затем, если нужен и Kubernetes,  
 `ansible-playbook -i hosts k8s.yml`
+
+### 2 - Установка mysql
+
+Запуск:  
+`ansible-playbook -i hosts mysql.yml`  
+
+На будущее создается дополнительный пользователь для доступа с любого хоста по паролю. Но bind_address остается localhost  
+root подключается без ввода пароля благодаря /root/.my.cnf  
+Сгенерированные пароли выводятся в процессе выполнения. Полезно их сохранить :)  
+
+    mysql> select host,user,authentication_string,plugin from mysql.user;
+    +-----------+------------------+------------------------------------+-----------------------+
+    | host      | user             | authentication_string              | plugin                |
+    +-----------+------------------+------------------------------------+-----------------------+
+    | %         | anton            | *303F6D0AEF83E461186B279DC7D431B8D | mysql_native_password |
+    | localhost | debian-sys-maint | $A$005$4<V|Q?J=}Ud*-WiuU28ziHUxS8F | caching_sha2_password |
+    | localhost | mysql.infoschema | $A$005$THISISACOMBINATIONOFINVALID | caching_sha2_password |
+    | localhost | mysql.session    | $A$005$THISISACOMBINATIONOFINVALID | caching_sha2_password |
+    | localhost | mysql.sys        | $A$005$THISISACOMBINATIONOFINVALID | caching_sha2_password |
+    | localhost | root             |                                    | auth_socket           |
+    +-----------+------------------+------------------------------------+-----------------------+
+    6 rows in set (0.00 sec)
 
